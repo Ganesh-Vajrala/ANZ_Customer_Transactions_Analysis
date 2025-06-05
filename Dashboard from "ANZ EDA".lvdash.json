@@ -1,0 +1,394 @@
+{
+  "datasets" : [ {
+    "name" : "6dad739e",
+    "displayName" : "- Summary Statistics for Customer Spending",
+    "query" : "select min(total_spend) as min_spend,max(total_spend) as max_spend,avg(total_spend) as avg_spend from anz.customer_master_profile_gold;"
+  }, {
+    "name" : "d0d55b36",
+    "displayName" : "Untitled dataset",
+    "query" : "select min(transaction_count) as min_txn_cnt, max(transaction_count) as max_txn_cnt,avg(transaction_count) as avg_txn_cnt from anz.customer_master_profile_gold;"
+  }, {
+    "name" : "93df25ba",
+    "displayName" : "customer_master_profile_gold",
+    "query" : "select * from anz.customer_master_profile_gold;\r\n"
+  }, {
+    "name" : "64ae1cb9",
+    "displayName" : "transaction_higher_spender",
+    "query" : "SELECT\r\n  customer_id,\r\n  total_spend,\r\n  transaction_count,\r\n  last_transaction_date\r\nFROM anz.customer_master_profile_gold\r\nWHERE total_spend > 9000"
+  } ],
+  "pages" : [ {
+    "name" : "75a47e1a",
+    "displayName" : "Untitled Page",
+    "layout" : [ {
+      "widget" : {
+        "name" : "6846f374",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "6dad739e",
+            "fields" : [ {
+              "name" : "avg(avg_spend)",
+              "expression" : "AVG(`avg_spend`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "avg(avg_spend)",
+              "displayName" : "Average avg_spend"
+            }
+          },
+          "frame" : {
+            "title" : "Average Customer Spending",
+            "showTitle" : true
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 0,
+        "width" : 2,
+        "height" : 3
+      }
+    }, {
+      "widget" : {
+        "name" : "a0242840",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "6dad739e",
+            "fields" : [ {
+              "name" : "min_spend",
+              "expression" : "`min_spend`"
+            }, {
+              "name" : "max_spend",
+              "expression" : "`max_spend`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 1,
+          "widgetType" : "table",
+          "encodings" : {
+            "columns" : [ {
+              "fieldName" : "min_spend",
+              "title" : "min_spend",
+              "booleanValues" : [ "false", "true" ],
+              "type" : "float",
+              "displayAs" : "number",
+              "visible" : true,
+              "displayName" : "min_spend"
+            }, {
+              "fieldName" : "max_spend",
+              "title" : "max_spend",
+              "booleanValues" : [ "false", "true" ],
+              "type" : "float",
+              "displayAs" : "number",
+              "visible" : true,
+              "displayName" : "max_spend"
+            } ]
+          },
+          "invisibleColumns" : [ {
+            "numberFormat" : "0.00",
+            "booleanValues" : [ "false", "true" ],
+            "imageUrlTemplate" : "{{ @ }}",
+            "imageTitleTemplate" : "{{ @ }}",
+            "imageWidth" : "",
+            "imageHeight" : "",
+            "linkUrlTemplate" : "{{ @ }}",
+            "linkTextTemplate" : "{{ @ }}",
+            "linkTitleTemplate" : "{{ @ }}",
+            "linkOpenInNewTab" : true,
+            "name" : "avg_spend",
+            "type" : "float",
+            "displayAs" : "number",
+            "order" : 100002,
+            "title" : "avg_spend",
+            "allowSearch" : false,
+            "alignContent" : "right",
+            "allowHTML" : false,
+            "highlightLinks" : false,
+            "useMonospaceFont" : false,
+            "preserveWhitespace" : false
+          } ],
+          "allowHTMLByDefault" : false,
+          "itemsPerPage" : 25,
+          "paginationSize" : "default",
+          "condensed" : true,
+          "withRowNumber" : false,
+          "frame" : {
+            "title" : "Minimum vs Maximum Customer Spending",
+            "showTitle" : true
+          }
+        }
+      },
+      "position" : {
+        "x" : 2,
+        "y" : 0,
+        "width" : 3,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "09715969",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "d0d55b36",
+            "fields" : [ {
+              "name" : "avg(avg_txn_cnt)",
+              "expression" : "AVG(`avg_txn_cnt`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "avg(avg_txn_cnt)",
+              "displayName" : "Average avg_txn_cnt"
+            }
+          },
+          "frame" : {
+            "title" : "Average Transaction Count",
+            "showTitle" : true
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 3,
+        "width" : 2,
+        "height" : 1
+      }
+    }, {
+      "widget" : {
+        "name" : "dcdf00d0",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "d0d55b36",
+            "fields" : [ {
+              "name" : "min_txn_cnt",
+              "expression" : "`min_txn_cnt`"
+            }, {
+              "name" : "max_txn_cnt",
+              "expression" : "`max_txn_cnt`"
+            }, {
+              "name" : "avg_txn_cnt",
+              "expression" : "`avg_txn_cnt`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 1,
+          "widgetType" : "table",
+          "encodings" : {
+            "columns" : [ {
+              "fieldName" : "min_txn_cnt",
+              "numberFormat" : "0",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "integer",
+              "displayAs" : "number",
+              "visible" : true,
+              "order" : 100000,
+              "title" : "min_txn_cnt",
+              "allowSearch" : false,
+              "alignContent" : "right",
+              "allowHTML" : false,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "displayName" : "min_txn_cnt"
+            }, {
+              "fieldName" : "max_txn_cnt",
+              "numberFormat" : "0",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "integer",
+              "displayAs" : "number",
+              "visible" : true,
+              "order" : 100001,
+              "title" : "max_txn_cnt",
+              "allowSearch" : false,
+              "alignContent" : "right",
+              "allowHTML" : false,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "displayName" : "max_txn_cnt"
+            }, {
+              "fieldName" : "avg_txn_cnt",
+              "numberFormat" : "0.00",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "float",
+              "displayAs" : "number",
+              "visible" : true,
+              "order" : 100002,
+              "title" : "avg_txn_cnt",
+              "allowSearch" : false,
+              "alignContent" : "right",
+              "allowHTML" : false,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "displayName" : "avg_txn_cnt"
+            } ]
+          },
+          "invisibleColumns" : [ ],
+          "allowHTMLByDefault" : false,
+          "itemsPerPage" : 25,
+          "paginationSize" : "default",
+          "condensed" : true,
+          "withRowNumber" : false
+        }
+      },
+      "position" : {
+        "x" : 2,
+        "y" : 2,
+        "width" : 3,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "0838b4c7",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "93df25ba",
+            "fields" : [ {
+              "name" : "customer_id",
+              "expression" : "`customer_id`"
+            }, {
+              "name" : "sum(transaction_count)",
+              "expression" : "SUM(`transaction_count`)"
+            }, {
+              "name" : "sum(avg_transaction_amount)",
+              "expression" : "SUM(`avg_transaction_amount`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 1,
+          "widgetType" : "combo",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "customer_id",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "customer_id"
+            },
+            "y" : {
+              "primary" : {
+                "fields" : [ {
+                  "fieldName" : "sum(transaction_count)",
+                  "displayName" : "Sum of transaction_count"
+                } ]
+              },
+              "secondary" : {
+                "fields" : [ {
+                  "fieldName" : "sum(avg_transaction_amount)",
+                  "displayName" : "Sum of avg_transaction_amount"
+                } ]
+              },
+              "scale" : {
+                "type" : "quantitative"
+              }
+            }
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 4,
+        "width" : 3,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "f0d1eabf",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "64ae1cb9",
+            "fields" : [ {
+              "name" : "sum(total_spend)",
+              "expression" : "SUM(`total_spend`)"
+            }, {
+              "name" : "customer_id",
+              "expression" : "`customer_id`"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "pie",
+          "encodings" : {
+            "angle" : {
+              "fieldName" : "sum(total_spend)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "displayName" : "Sum of total_spend"
+            },
+            "color" : {
+              "fieldName" : "customer_id",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "customer_id"
+            },
+            "label" : {
+              "show" : true
+            }
+          },
+          "frame" : {
+            "title" : "Total Spend Distribution",
+            "showTitle" : true
+          }
+        }
+      },
+      "position" : {
+        "x" : 3,
+        "y" : 4,
+        "width" : 3,
+        "height" : 6
+      }
+    } ],
+    "pageType" : "PAGE_TYPE_CANVAS"
+  } ]
+}
