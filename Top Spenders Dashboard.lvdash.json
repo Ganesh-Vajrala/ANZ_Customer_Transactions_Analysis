@@ -1,0 +1,519 @@
+{
+  "datasets" : [ {
+    "name" : "0999c107",
+    "displayName" : "segmentation gold",
+    "query" : "select * from anz.customer_campaign_segmentation_gold;"
+  }, {
+    "name" : "1ee67e73",
+    "displayName" : "top spenders trans type",
+    "query" : "WITH ranked_customers AS (\r\n  SELECT *,\r\n         NTILE(5) OVER (ORDER BY total_spend DESC) AS spend_rank\r\n  FROM hive_metastore.anz.customer_master_profile_gold\r\n)\r\nSELECT\r\n  'POS' AS transaction_type, SUM(spend_pos) AS total_spend\r\nFROM ranked_customers WHERE spend_rank = 1\r\nUNION ALL\r\nSELECT\r\n  'Payment Transfer', SUM(spend_payment_transfer)\r\nFROM ranked_customers WHERE spend_rank = 1\r\nUNION ALL\r\nSELECT\r\n  'Inter Bank Transfer', SUM(spend_inter_bank_transfer)\r\nFROM ranked_customers WHERE spend_rank = 1\r\nUNION ALL\r\nSELECT\r\n  'Phone Banking', SUM(spend_phone_banking)\r\nFROM ranked_customers WHERE spend_rank = 1;\r\n"
+  }, {
+    "name" : "58d08393",
+    "displayName" : "top spenders avgs",
+    "query" : "WITH ranked_customers AS (\r\n  SELECT *,\r\n         NTILE(5) OVER (ORDER BY total_spend DESC) AS spend_rank\r\n  FROM hive_metastore.anz.customer_master_profile_gold\r\n)\r\nSELECT\r\n  ROUND(AVG(avg_transaction_amount), 2) AS avg_transaction,\r\n  ROUND(AVG(median_transaction_amount), 2) AS median_transaction,\r\n  ROUND(AVG(max_transaction_amount), 2) AS max_transaction,\r\n  ROUND(AVG(min_transaction_amount), 2) AS min_transaction,\r\n  ROUND(AVG(stddev_transaction_amount), 2) AS stddev_transaction\r\nFROM ranked_customers\r\nWHERE spend_rank = 1;\r\n"
+  }, {
+    "name" : "b65ba2dc",
+    "displayName" : "top spenders avgs trans type",
+    "query" : "WITH ranked_customers AS (\r\n  SELECT *,\r\n         NTILE(5) OVER (ORDER BY total_spend DESC) AS spend_rank\r\n  FROM hive_metastore.anz.customer_master_profile_gold\r\n)\r\nSELECT\r\n  ROUND(AVG(count_pos), 2) AS avg_count_pos,\r\n  ROUND(AVG(count_payment_transfer), 2) AS avg_count_payment_transfer,\r\n  ROUND(AVG(count_inter_bank_transfer), 2) AS avg_count_inter_bank_transfer,\r\n  ROUND(AVG(count_phone_banking), 2) AS avg_count_phone_banking\r\nFROM ranked_customers\r\nWHERE spend_rank = 1;"
+  }, {
+    "name" : "a2df307f",
+    "displayName" : "top spenders by gender",
+    "query" : "WITH ranked_customers AS (\r\n  SELECT *,\r\n         NTILE(5) OVER (ORDER BY total_spend DESC) AS spend_rank\r\n  FROM hive_metastore.anz.customer_master_profile_gold\r\n)\r\nSELECT gender, COUNT(*) AS customer_count\r\nFROM ranked_customers\r\nWHERE spend_rank = 1\r\nGROUP BY gender;\r\n"
+  }, {
+    "name" : "d6d08a26",
+    "displayName" : "top spenders by age",
+    "query" : "WITH ranked_customers AS (\r\n  SELECT *,\r\n         NTILE(5) OVER (ORDER BY total_spend DESC) AS spend_rank\r\n  FROM anz.customer_master_profile_gold\r\n),\r\nhigh_spenders AS (\r\n  SELECT * FROM ranked_customers WHERE spend_rank = 1\r\n)\r\nSELECT \r\n  CASE \r\n    WHEN age < 20 THEN 'Under 20'\r\n    WHEN age BETWEEN 20 AND 29 THEN '20-29'\r\n    WHEN age BETWEEN 30 AND 39 THEN '30-39'\r\n    WHEN age BETWEEN 40 AND 49 THEN '40-49'\r\n    WHEN age BETWEEN 50 AND 59 THEN '50-59'\r\n    ELSE '60+'\r\n  END AS age_group,\r\n  COUNT(*) AS num_customers\r\nFROM high_spenders\r\nGROUP BY age_group\r\nORDER BY age_group;\r\n"
+  }, {
+    "name" : "c4393baf",
+    "displayName" : "top vs low spenders",
+    "query" : "WITH ranked_customers AS (\r\n  SELECT *,\r\n         NTILE(5) OVER (ORDER BY total_spend DESC) AS spend_rank\r\n  FROM anz.customer_master_profile_gold\r\n)\r\nSELECT \r\n  CASE WHEN spend_rank = 1 THEN 'High Spenders'\r\n       WHEN spend_rank = 5 THEN 'Low Spenders'\r\n       ELSE 'Others'\r\n  END AS spender_segment,\r\n  ROUND(AVG(customer_tenure_days), 2) AS avg_tenure_days\r\nFROM ranked_customers\r\nGROUP BY spender_segment;\r\n"
+  }, {
+    "name" : "e94be8c6",
+    "displayName" : "top vs low spend percentage",
+    "query" : "WITH ranked_customers AS (\r\n  SELECT *,\r\n         NTILE(5) OVER (ORDER BY total_spend DESC) AS spend_rank\r\n  FROM anz.customer_master_profile_gold\r\n),\r\nlabeled_segments AS (\r\n  SELECT *,\r\n         CASE \r\n           WHEN spend_rank = 1 THEN 'High Spenders'\r\n           WHEN spend_rank = 5 THEN 'Low Spenders'\r\n           ELSE 'Others'\r\n         END AS spender_segment\r\n  FROM ranked_customers\r\n),\r\nsegment_spend AS (\r\n  SELECT \r\n    spender_segment,\r\n    SUM(total_spend) AS segment_total_spend\r\n  FROM labeled_segments\r\n  GROUP BY spender_segment\r\n),\r\noverall_total AS (\r\n  SELECT SUM(total_spend) AS overall_spend\r\n  FROM anz.customer_master_profile_gold\r\n)\r\nSELECT \r\n  s.spender_segment,\r\n  ROUND(s.segment_total_spend, 2) AS segment_total_spend,\r\n  ROUND((s.segment_total_spend / o.overall_spend) * 100, 2) AS spend_percentage\r\nFROM segment_spend s\r\nCROSS JOIN overall_total o\r\nORDER BY spend_percentage DESC;\r\n"
+  }, {
+    "name" : "a823d255",
+    "displayName" : "card vs non card",
+    "query" : "WITH ranked_customers AS (\r\n  SELECT *,\r\n         NTILE(5) OVER (ORDER BY total_spend DESC) AS spend_rank\r\n  FROM hive_metastore.anz.customer_master_profile_gold\r\n)\r\n\r\nSELECT \r\n  total_spend,\r\n  transaction_count,\r\n  card_involved_transactions,\r\n  card_not_involved_transactions\r\nFROM ranked_customers\r\nWHERE spend_rank = 1;\r\n\r\n"
+  } ],
+  "pages" : [ {
+    "name" : "910b4a8e",
+    "displayName" : "Untitled page",
+    "layout" : [ {
+      "widget" : {
+        "name" : "293f8e6e",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "1ee67e73",
+            "fields" : [ {
+              "name" : "transaction_type",
+              "expression" : "`transaction_type`"
+            }, {
+              "name" : "sum(total_spend)",
+              "expression" : "SUM(`total_spend`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "bar",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "transaction_type",
+              "scale" : {
+                "type" : "categorical",
+                "sort" : {
+                  "by" : "y-reversed"
+                }
+              },
+              "displayName" : "transaction_type"
+            },
+            "y" : {
+              "fieldName" : "sum(total_spend)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "displayName" : "Sum of total_spend"
+            }
+          },
+          "frame" : {
+            "title" : "Total Spend by Transaction Type",
+            "showTitle" : true
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 2,
+        "width" : 3,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "7c3058ea",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "58d08393",
+            "fields" : [ {
+              "name" : "avg_transaction",
+              "expression" : "`avg_transaction`"
+            }, {
+              "name" : "median_transaction",
+              "expression" : "`median_transaction`"
+            }, {
+              "name" : "max_transaction",
+              "expression" : "`max_transaction`"
+            }, {
+              "name" : "min_transaction",
+              "expression" : "`min_transaction`"
+            }, {
+              "name" : "stddev_transaction",
+              "expression" : "`stddev_transaction`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 1,
+          "widgetType" : "table",
+          "encodings" : {
+            "columns" : [ {
+              "fieldName" : "avg_transaction",
+              "title" : "avg_transaction",
+              "booleanValues" : [ "false", "true" ],
+              "type" : "float",
+              "displayAs" : "number",
+              "displayName" : "avg_transaction"
+            }, {
+              "fieldName" : "median_transaction",
+              "title" : "median_transaction",
+              "booleanValues" : [ "false", "true" ],
+              "type" : "float",
+              "displayAs" : "number",
+              "displayName" : "median_transaction"
+            }, {
+              "fieldName" : "max_transaction",
+              "title" : "max_transaction",
+              "booleanValues" : [ "false", "true" ],
+              "type" : "float",
+              "displayAs" : "number",
+              "displayName" : "max_transaction"
+            }, {
+              "fieldName" : "min_transaction",
+              "title" : "min_transaction",
+              "booleanValues" : [ "false", "true" ],
+              "type" : "float",
+              "displayAs" : "number",
+              "displayName" : "min_transaction"
+            }, {
+              "fieldName" : "stddev_transaction",
+              "title" : "stddev_transaction",
+              "booleanValues" : [ "false", "true" ],
+              "type" : "float",
+              "displayAs" : "number",
+              "displayName" : "stddev_transaction"
+            } ]
+          },
+          "invisibleColumns" : [ ],
+          "allowHTMLByDefault" : false,
+          "itemsPerPage" : 25,
+          "paginationSize" : "default",
+          "condensed" : true,
+          "withRowNumber" : false,
+          "frame" : {
+            "title" : "Transaction Statistics Table",
+            "showTitle" : true
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 0,
+        "width" : 6,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "075208d0",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "b65ba2dc",
+            "fields" : [ {
+              "name" : "avg_count_pos",
+              "expression" : "`avg_count_pos`"
+            }, {
+              "name" : "avg_count_payment_transfer",
+              "expression" : "`avg_count_payment_transfer`"
+            }, {
+              "name" : "avg_count_inter_bank_transfer",
+              "expression" : "`avg_count_inter_bank_transfer`"
+            }, {
+              "name" : "avg_count_phone_banking",
+              "expression" : "`avg_count_phone_banking`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 1,
+          "widgetType" : "table",
+          "encodings" : {
+            "columns" : [ {
+              "fieldName" : "avg_count_pos",
+              "title" : "avg_count_pos",
+              "booleanValues" : [ "false", "true" ],
+              "type" : "float",
+              "displayAs" : "number",
+              "displayName" : "avg_count_pos"
+            }, {
+              "fieldName" : "avg_count_payment_transfer",
+              "title" : "avg_count_payment_transfer",
+              "booleanValues" : [ "false", "true" ],
+              "type" : "float",
+              "displayAs" : "number",
+              "displayName" : "avg_count_payment_transfer"
+            }, {
+              "fieldName" : "avg_count_inter_bank_transfer",
+              "title" : "avg_count_inter_bank_transfer",
+              "booleanValues" : [ "false", "true" ],
+              "type" : "float",
+              "displayAs" : "number",
+              "displayName" : "avg_count_inter_bank_transfer"
+            }, {
+              "fieldName" : "avg_count_phone_banking",
+              "title" : "avg_count_phone_banking",
+              "booleanValues" : [ "false", "true" ],
+              "type" : "float",
+              "displayAs" : "number",
+              "displayName" : "avg_count_phone_banking"
+            } ]
+          },
+          "invisibleColumns" : [ ],
+          "allowHTMLByDefault" : false,
+          "itemsPerPage" : 25,
+          "paginationSize" : "default",
+          "condensed" : true,
+          "withRowNumber" : false,
+          "frame" : {
+            "title" : "Table of top spenders average transaction types",
+            "showTitle" : true
+          }
+        }
+      },
+      "position" : {
+        "x" : 3,
+        "y" : 2,
+        "width" : 3,
+        "height" : 3
+      }
+    }, {
+      "widget" : {
+        "name" : "261fe6c4",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "a2df307f",
+            "fields" : [ {
+              "name" : "customer_count",
+              "expression" : "`customer_count`"
+            }, {
+              "name" : "gender",
+              "expression" : "`gender`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "pie",
+          "encodings" : {
+            "angle" : {
+              "fieldName" : "customer_count",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "displayName" : "customer_count"
+            },
+            "color" : {
+              "fieldName" : "gender",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "gender"
+            },
+            "label" : {
+              "show" : true
+            }
+          },
+          "frame" : {
+            "title" : "Customer Count Distribution by Gender",
+            "showTitle" : true
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 8,
+        "width" : 3,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "585a2892",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "d6d08a26",
+            "fields" : [ {
+              "name" : "age_group",
+              "expression" : "`age_group`"
+            }, {
+              "name" : "sum(num_customers)",
+              "expression" : "SUM(`num_customers`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "bar",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "age_group",
+              "scale" : {
+                "type" : "categorical",
+                "sort" : {
+                  "by" : "y-reversed"
+                }
+              },
+              "displayName" : "age_group"
+            },
+            "y" : {
+              "fieldName" : "sum(num_customers)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "displayName" : "Sum of num_customers"
+            }
+          },
+          "frame" : {
+            "title" : "Top spenders by age group",
+            "showTitle" : true
+          }
+        }
+      },
+      "position" : {
+        "x" : 3,
+        "y" : 5,
+        "width" : 3,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "d3e1ddce",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "c4393baf",
+            "fields" : [ {
+              "name" : "spender_segment",
+              "expression" : "`spender_segment`"
+            }, {
+              "name" : "sum(avg_tenure_days)",
+              "expression" : "SUM(`avg_tenure_days`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "bar",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "spender_segment",
+              "scale" : {
+                "type" : "categorical",
+                "sort" : {
+                  "by" : "y-reversed"
+                }
+              },
+              "displayName" : "spender_segment"
+            },
+            "y" : {
+              "fieldName" : "sum(avg_tenure_days)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "displayName" : "Sum of avg_tenure_days"
+            }
+          },
+          "frame" : {
+            "title" : "Sum of Average Tenure Days by Spender Segment",
+            "showTitle" : true
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 14,
+        "width" : 3,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "c30e30a6",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "e94be8c6",
+            "fields" : [ {
+              "name" : "spender_segment",
+              "expression" : "`spender_segment`"
+            }, {
+              "name" : "segment_total_spend",
+              "expression" : "`segment_total_spend`"
+            }, {
+              "name" : "spend_percentage",
+              "expression" : "`spend_percentage`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "bar",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "spender_segment",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "spender_segment"
+            },
+            "y" : {
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "fields" : [ {
+                "fieldName" : "segment_total_spend",
+                "displayName" : "segment_total_spend"
+              }, {
+                "fieldName" : "spend_percentage",
+                "displayName" : "spend_percentage"
+              } ]
+            }
+          }
+        }
+      },
+      "position" : {
+        "x" : 3,
+        "y" : 11,
+        "width" : 3,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "0ec452c5",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "a823d255",
+            "fields" : [ {
+              "name" : "transaction_count",
+              "expression" : "`transaction_count`"
+            }, {
+              "name" : "card_involved_transactions",
+              "expression" : "`card_involved_transactions`"
+            }, {
+              "name" : "card_not_involved_transactions",
+              "expression" : "`card_not_involved_transactions`"
+            }, {
+              "name" : "total_spend",
+              "expression" : "`total_spend`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "scatter",
+          "encodings" : {
+            "x" : {
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "fields" : [ {
+                "fieldName" : "transaction_count",
+                "displayName" : "transaction_count"
+              }, {
+                "fieldName" : "card_involved_transactions",
+                "displayName" : "card_involved_transactions"
+              }, {
+                "fieldName" : "card_not_involved_transactions",
+                "displayName" : "card_not_involved_transactions"
+              } ]
+            },
+            "y" : {
+              "fieldName" : "total_spend",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "displayName" : "total_spend"
+            }
+          }
+        }
+      },
+      "position" : {
+        "x" : 3,
+        "y" : 17,
+        "width" : 3,
+        "height" : 6
+      }
+    } ],
+    "pageType" : "PAGE_TYPE_CANVAS"
+  } ]
+}
